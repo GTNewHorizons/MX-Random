@@ -70,6 +70,7 @@ class LargeMolecularAssembler :
     private var aeJobsDirty = false
 
     private var cachedPatterns: List<ItemStack> = emptyList()
+    private var cachedRawPatterns: List<ItemStack> = emptyList()
     private var cachedPatternDetails: List<ICraftingPatternDetails> = emptyList()
 
     private var requestSource: BaseActionSource? = null
@@ -351,6 +352,8 @@ class LargeMolecularAssembler :
     private fun issuePatternChangeIfNeeded(tick: Long) {
         if (tick % 20 != 0L) return
         compactedInputs.let { inputs ->
+            if (storedInputs.equals(cachedRawPatterns)) return
+            cachedRawPatterns = ArrayList(storedInputs)
             val patterns = inputs.filter { it.getPattern(baseMetaTileEntity.world)?.isCraftable == true }
             if (patterns == cachedPatterns) return
             cachedPatterns = patterns
