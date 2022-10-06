@@ -239,6 +239,7 @@ class LargeMolecularAssembler :
 
     override fun addOutput(stack: ItemStack): Boolean {
         cachedOutputs.add(AEApi.instance().storage().createItemStack(stack))
+        markDirty()
         return true
     }
 
@@ -263,7 +264,7 @@ class LargeMolecularAssembler :
 // endregion
 
     private inline fun withAeJobs(action: (dataOrb: ItemStack, aeJobs: LinkedList<ItemStack>) -> Unit) {
-        if (mInventory[1] === cachedDataOrb) {
+        if (mInventory[1] === cachedDataOrb && cachedDataOrb != null) {
             action(cachedDataOrb!!, cachedAeJobs!!)
             return
         }
@@ -345,6 +346,7 @@ class LargeMolecularAssembler :
         if (!aeJobsDirty) return
         withAeJobs { dataOrb, aeJobs ->
             Behaviour_DataOrb.setNBTInventory(dataOrb, aeJobs.toTypedArray())
+            markDirty()
             aeJobsDirty = false
         }
     }
