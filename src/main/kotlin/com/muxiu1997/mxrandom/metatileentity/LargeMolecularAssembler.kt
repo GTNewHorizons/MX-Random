@@ -253,7 +253,18 @@ class LargeMolecularAssembler :
         }
     }
 
-    override fun onScrewdriverRightClick(side: Byte, player: EntityPlayer?, x: Float, y: Float, z: Float) {
+    override fun getTexture(
+        baseMetaTileEntity: IGregTechTileEntity?,
+        side: ForgeDirection?,
+        facing: ForgeDirection?,
+        colorIndex: Int,
+        active: Boolean,
+        redstoneLevel: Boolean
+    ): Array<ITexture> {
+        TODO("Not yet implemented")
+    }
+
+    override fun onScrewdriverRightClick(side: ForgeDirection?, player: EntityPlayer?, x: Float, y: Float, z: Float) {
         if (baseMetaTileEntity.isClientSide || player !is EntityPlayerMP) return
         when (side) {
             baseMetaTileEntity.frontFacing -> {
