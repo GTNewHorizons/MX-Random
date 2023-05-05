@@ -105,7 +105,6 @@ class LargeMolecularAssembler :
                 BlockIcons.getCasingTextureForId(CASING_INDEX),
                 TextureFactory.builder().addIcon(BlockIcons.OVERLAY_ME_HATCH).extFacing().build(),
             )
-
             else -> arrayOf(
                 BlockIcons.getCasingTextureForId(CASING_INDEX),
             )
@@ -255,7 +254,7 @@ class LargeMolecularAssembler :
         }
     }
 
-    override fun onScrewdriverRightClick(side: ForgeDirection, player: EntityPlayer?, x: Float, y: Float, z: Float) {
+    override fun onScrewdriverRightClick(side: ForgeDirection?, player: EntityPlayer?, x: Float, y: Float, z: Float) {
         super.onScrewdriverRightClick(side, player, x, y, z)
         if (baseMetaTileEntity.isClientSide || player !is EntityPlayerMP) return
         if (side == baseMetaTileEntity.frontFacing) {
@@ -524,7 +523,6 @@ class LargeMolecularAssembler :
                                 it.craftingDisplayPoint = CraftingDisplayPoint(w, x, y, z)
                                 true
                             }
-
                             else -> false
                         }
                     }

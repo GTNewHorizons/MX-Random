@@ -26,5 +26,5 @@ interface IConfigurableMetaTileEntity {
     fun getServerGuiElement(ID: Int, player: EntityPlayer?): Any?
 
     fun getClientGuiElement(ID: Int, player: EntityPlayer?): Any?
-    fun onScrewdriverRightClick(side: ForgeDirection, player: EntityPlayer?, x: Float, y: Float, z: Float)
+    fun onScrewdriverRightClick(side: ForgeDirection?, player: EntityPlayer?, x: Float, y: Float, z: Float)
 }
