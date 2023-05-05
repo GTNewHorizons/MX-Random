@@ -5,6 +5,7 @@ import com.muxiu1997.mxrandom.network.message.MessageSyncMetaTileEntityConfig
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity
 import io.netty.buffer.ByteBuf
 import net.minecraft.entity.player.EntityPlayer
+import net.minecraftforge.common.util.ForgeDirection
 
 interface IConfigurableMetaTileEntity {
     fun getBaseMetaTileEntity(): IGregTechTileEntity
@@ -25,5 +26,5 @@ interface IConfigurableMetaTileEntity {
     fun getServerGuiElement(ID: Int, player: EntityPlayer?): Any?
 
     fun getClientGuiElement(ID: Int, player: EntityPlayer?): Any?
-    fun onScrewdriverRightClick(side: Byte, player: EntityPlayer?, x: Float, y: Float, z: Float)
+    fun onScrewdriverRightClick(side: ForgeDirection, player: EntityPlayer?, x: Float, y: Float, z: Float)
 }
