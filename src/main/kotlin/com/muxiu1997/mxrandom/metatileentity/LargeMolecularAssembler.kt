@@ -94,12 +94,12 @@ class LargeMolecularAssembler :
 
     override fun getTexture(
         baseMetaTileEntity: IGregTechTileEntity?,
-        side: Byte,
-        facing: Byte,
-        colorIndex: Byte,
+        side: ForgeDirection?,
+        facing: ForgeDirection?,
+        colorIndex: Int,
         active: Boolean,
         redstone: Boolean
-    ): Array<ITexture> {
+    ): Array<out ITexture> {
         return when (side) {
             facing -> arrayOf(
                 BlockIcons.getCasingTextureForId(CASING_INDEX),
@@ -192,7 +192,7 @@ class LargeMolecularAssembler :
                 .addSeparator()
                 .beginStructureBlock(5, 5, 5, true)
                 .addController("Front center")
-                .addCasingInfo("Robust Tungstensteel Machine Casing", MIN_CASING_COUNT)
+                .addCasingInfoMin("Robust Tungstensteel Machine Casing", MIN_CASING_COUNT, false)
                 .addInputBus("Any casing", 1)
                 .addEnergyHatch("Any casing", 1)
                 .addMaintenanceHatch("Any casing", 1)
@@ -209,6 +209,7 @@ class LargeMolecularAssembler :
                 STRUCTURE_VERTICAL_OFFSET,
                 STRUCTURE_DEPTH_OFFSET
             ) -> false
+
             !checkHatches() -> false
             casing < MIN_CASING_COUNT -> false
             else -> true
@@ -253,23 +254,11 @@ class LargeMolecularAssembler :
         }
     }
 
-    override fun getTexture(
-        baseMetaTileEntity: IGregTechTileEntity?,
-        side: ForgeDirection?,
-        facing: ForgeDirection?,
-        colorIndex: Int,
-        active: Boolean,
-        redstoneLevel: Boolean
-    ): Array<ITexture> {
-        TODO("Not yet implemented")
-    }
-
     override fun onScrewdriverRightClick(side: ForgeDirection?, player: EntityPlayer?, x: Float, y: Float, z: Float) {
+        super.onScrewdriverRightClick(side, player, x, y, z)
         if (baseMetaTileEntity.isClientSide || player !is EntityPlayerMP) return
-        when (side) {
-            baseMetaTileEntity.frontFacing -> {
-                network.sendTo(MessageSyncMetaTileEntityConfig(this, true), player)
-            }
+        if (side == baseMetaTileEntity.frontFacing) {
+            network.sendTo(MessageSyncMetaTileEntityConfig(this, true), player)
         }
     }
 // endregion
@@ -501,26 +490,26 @@ class LargeMolecularAssembler :
             StructureDefinition.builder<LargeMolecularAssembler>()
                 .addShape(
                     STRUCTURE_PIECE_MAIN, transpose(
-                        arrayOf(
-                            arrayOf("CCCCC", "CGGGC", "CGGGC", "CGGGC", "CCCCC"),
-                            arrayOf("CGGGC", "G---G", "G---G", "G---G", "CGGGC"),
-                            arrayOf("CGGGC", "G---G", "G-X-G", "G---G", "CGGGC"),
-                            arrayOf("CGGGC", "G---G", "G---G", "G---G", "CGGGC"),
-                            arrayOf("CC~CC", "CGGGC", "CGGGC", "CGGGC", "CCCCC"),
-                        )
+                    arrayOf(
+                        arrayOf("CCCCC", "CGGGC", "CGGGC", "CGGGC", "CCCCC"),
+                        arrayOf("CGGGC", "G---G", "G---G", "G---G", "CGGGC"),
+                        arrayOf("CGGGC", "G---G", "G-X-G", "G---G", "CGGGC"),
+                        arrayOf("CGGGC", "G---G", "G---G", "G---G", "CGGGC"),
+                        arrayOf("CC~CC", "CGGGC", "CGGGC", "CGGGC", "CCCCC"),
                     )
+                )
                 )
                 .addElement(
                     'C', ofChain(
-                        ofHatchAdder(
-                            LargeMolecularAssembler::addToLargeMolecularAssemblerList,
-                            CASING_INDEX,
-                            1
-                        ),
-                        onElementPass(
-                            { it.casing++ }, ofBlock(GregTech_API.sBlockCasings4, 0)
-                        ),
-                    )
+                    ofHatchAdder(
+                        LargeMolecularAssembler::addToLargeMolecularAssemblerList,
+                        CASING_INDEX,
+                        1
+                    ),
+                    onElementPass(
+                        { it.casing++ }, ofBlock(GregTech_API.sBlockCasings4, 0)
+                    ),
+                )
                 )
                 .addElement(
                     'G',
