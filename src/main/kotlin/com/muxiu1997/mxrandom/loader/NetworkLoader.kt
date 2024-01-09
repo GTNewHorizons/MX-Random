@@ -14,21 +14,21 @@ import cpw.mods.fml.common.network.simpleimpl.IMessageHandler
 import cpw.mods.fml.relauncher.Side
 
 object NetworkLoader {
-    fun load(@Suppress("UNUSED_PARAMETER") e: FMLInitializationEvent) {
-        register(MessageCraftingFX.Companion.Handler)
-        register(MessageSyncMetaTileEntityConfig.Companion.Handler)
+  fun load(@Suppress("UNUSED_PARAMETER") e: FMLInitializationEvent) {
+    register(MessageCraftingFX.Companion.Handler)
+    register(MessageSyncMetaTileEntityConfig.Companion.Handler)
 
-        NetworkRegistry.INSTANCE.registerGuiHandler(MODID, GuiHandler)
+    NetworkRegistry.INSTANCE.registerGuiHandler(MODID, GuiHandler)
+  }
+
+  private var networkMessageID = 0
+
+  private inline fun <reified M : IMessage> register(handler: IMessageHandler<M, *>) {
+    if (handler is IMessageServerSideHandler) {
+      MXRandom.network.registerMessage(handler, M::class.java, networkMessageID++, Side.SERVER)
     }
-
-    private var networkMessageID = 0
-
-    private inline fun <reified M : IMessage> register(handler: IMessageHandler<M, *>) {
-        if (handler is IMessageServerSideHandler) {
-            MXRandom.network.registerMessage(handler, M::class.java, networkMessageID++, Side.SERVER)
-        }
-        if (handler is IMessageClientSideHandler) {
-            MXRandom.network.registerMessage(handler, M::class.java, networkMessageID++, Side.CLIENT)
-        }
+    if (handler is IMessageClientSideHandler) {
+      MXRandom.network.registerMessage(handler, M::class.java, networkMessageID++, Side.CLIENT)
     }
+  }
 }

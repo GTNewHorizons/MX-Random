@@ -6,11 +6,11 @@ import cpw.mods.fml.relauncher.Side
 
 interface IMessageBothSideHandler<REQ : IMessage, REPLY : IMessage?> :
     IMessageServerSideHandler<REQ, REPLY>, IMessageClientSideHandler<REQ, REPLY> {
-    override fun onMessage(message: REQ, ctx: MessageContext): REPLY {
-        return if (ctx.side == Side.SERVER) {
-            handleServerSideMessage(message, ctx)
-        } else {
-            handleClientSideMessage(message, ctx)
-        }
+  override fun onMessage(message: REQ, ctx: MessageContext): REPLY {
+    return if (ctx.side == Side.SERVER) {
+      handleServerSideMessage(message, ctx)
+    } else {
+      handleClientSideMessage(message, ctx)
     }
+  }
 }

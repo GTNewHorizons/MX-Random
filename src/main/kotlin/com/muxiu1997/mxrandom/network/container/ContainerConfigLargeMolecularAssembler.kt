@@ -5,7 +5,7 @@ import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.inventory.Container
 
 class ContainerConfigLargeMolecularAssembler(val LMA: LargeMolecularAssembler) : Container() {
-    override fun canInteractWith(player: EntityPlayer?): Boolean {
-        return true
-    }
+  override fun canInteractWith(player: EntityPlayer?): Boolean {
+    return true
+  }
 }

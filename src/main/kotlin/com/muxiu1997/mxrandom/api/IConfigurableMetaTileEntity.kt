@@ -8,23 +8,29 @@ import net.minecraft.entity.player.EntityPlayer
 import net.minecraftforge.common.util.ForgeDirection
 
 interface IConfigurableMetaTileEntity {
-    fun getBaseMetaTileEntity(): IGregTechTileEntity
+  fun getBaseMetaTileEntity(): IGregTechTileEntity
 
-    fun readConfigFromBytes(buf: ByteBuf)
+  fun readConfigFromBytes(buf: ByteBuf)
 
-    fun writeConfigToBytes(buf: ByteBuf)
+  fun writeConfigToBytes(buf: ByteBuf)
 
-    fun applyConfigChanges() {
-        val baseMetaTileEntity = getBaseMetaTileEntity()
-        baseMetaTileEntity.markDirty()
-        when {
-            baseMetaTileEntity.isClientSide -> network.sendToServer(MessageSyncMetaTileEntityConfig(this))
-            baseMetaTileEntity.isServerSide -> network.sendToAll(MessageSyncMetaTileEntityConfig(this))
-        }
+  fun applyConfigChanges() {
+    val baseMetaTileEntity = getBaseMetaTileEntity()
+    baseMetaTileEntity.markDirty()
+    when {
+      baseMetaTileEntity.isClientSide -> network.sendToServer(MessageSyncMetaTileEntityConfig(this))
+      baseMetaTileEntity.isServerSide -> network.sendToAll(MessageSyncMetaTileEntityConfig(this))
     }
+  }
 
-    fun getServerGuiElement(ID: Int, player: EntityPlayer?): Any?
+  fun getServerGuiElement(ID: Int, player: EntityPlayer?): Any?
 
-    fun getClientGuiElement(ID: Int, player: EntityPlayer?): Any?
-    fun onScrewdriverRightClick(side: ForgeDirection?, player: EntityPlayer?, x: Float, y: Float, z: Float)
+  fun getClientGuiElement(ID: Int, player: EntityPlayer?): Any?
+  fun onScrewdriverRightClick(
+      side: ForgeDirection?,
+      player: EntityPlayer?,
+      x: Float,
+      y: Float,
+      z: Float
+  )
 }

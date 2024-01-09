@@ -15,59 +15,58 @@ import org.apache.logging.log4j.Logger
     name = MODNAME,
     version = VERSION,
     modLanguageAdapter = "net.shadowfacts.forgelin.KotlinAdapter",
-    dependencies = "" +
-        "required-after:forgelin;" +
-        "required-after:appliedenergistics2;" +
-        "required-after:gregtech",
+    dependencies =
+        "" +
+            "required-after:forgelin;" +
+            "required-after:appliedenergistics2;" +
+            "required-after:gregtech",
 )
 object MXRandomMod {
-    @SidedProxy(
-        serverSide = "$GROUPNAME.proxy.CommonProxy",
-        clientSide = "$GROUPNAME.proxy.ClientProxy"
-    )
-    lateinit var proxy: CommonProxy
+  @SidedProxy(
+      serverSide = "$GROUPNAME.proxy.CommonProxy", clientSide = "$GROUPNAME.proxy.ClientProxy")
+  lateinit var proxy: CommonProxy
 
-    @Mod.EventHandler
-    fun onInit(@Suppress("UNUSED_PARAMETER") e: FMLInitializationEvent) {
-        proxy.onInit(e)
-    }
+  @Mod.EventHandler
+  fun onInit(@Suppress("UNUSED_PARAMETER") e: FMLInitializationEvent) {
+    proxy.onInit(e)
+  }
 
-    @Mod.EventHandler
-    fun onPostInit(@Suppress("UNUSED_PARAMETER") e: FMLPostInitializationEvent) {
-        proxy.onPostInit(e)
-    }
+  @Mod.EventHandler
+  fun onPostInit(@Suppress("UNUSED_PARAMETER") e: FMLPostInitializationEvent) {
+    proxy.onPostInit(e)
+  }
 }
 
 @Suppress("unused", "MemberVisibilityCanBePrivate", "FunctionName")
 object MXRandom {
-    // region Logger
-    val logger: Logger = LogManager.getLogger(MODID)
-    fun debug(message: Any) {
-        logger.debug("[$MODNAME]$message")
-    }
+  // region Logger
+  val logger: Logger = LogManager.getLogger(MODID)
+  fun debug(message: Any) {
+    logger.debug("[$MODNAME]$message")
+  }
 
-    fun info(message: Any) {
-        logger.info("[$MODNAME]$message")
-    }
+  fun info(message: Any) {
+    logger.info("[$MODNAME]$message")
+  }
 
-    fun warn(message: Any) {
-        logger.warn("[$MODNAME]$message")
-    }
+  fun warn(message: Any) {
+    logger.warn("[$MODNAME]$message")
+  }
 
-    fun error(message: Any) {
-        logger.error("[$MODNAME]$message")
-    }
+  fun error(message: Any) {
+    logger.error("[$MODNAME]$message")
+  }
 
-    fun Any._debug() = debug(this)
+  fun Any._debug() = debug(this)
 
-    fun Any._info() = info(this)
+  fun Any._info() = info(this)
 
-    fun Any._warn() = warn(this)
+  fun Any._warn() = warn(this)
 
-    fun Any._error() = error(this)
-    // endregion
+  fun Any._error() = error(this)
+  // endregion
 
-    const val MTE_ID_OFFSET = 14100
+  const val MTE_ID_OFFSET = 14100
 
-    val network: SimpleNetworkWrapper = NetworkRegistry.INSTANCE.newSimpleChannel(MODID)
+  val network: SimpleNetworkWrapper = NetworkRegistry.INSTANCE.newSimpleChannel(MODID)
 }
