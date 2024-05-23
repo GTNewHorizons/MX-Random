@@ -57,6 +57,7 @@ import net.minecraft.util.EnumChatFormatting
 import net.minecraft.world.World
 import net.minecraftforge.common.util.ForgeDirection
 
+@Deprecated("Planned for removal.")
 class LargeMolecularAssembler :
     GT_MetaTileEntity_EnhancedMultiBlockBase<LargeMolecularAssembler>,
     IConfigurableMetaTileEntity,
@@ -184,6 +185,7 @@ class LargeMolecularAssembler :
     fun PURPLE(thing: Any) = "${EnumChatFormatting.DARK_PURPLE}$thing${EnumChatFormatting.GRAY}"
     return GT_Multiblock_Tooltip_Builder().also {
       it.addMachineType(MACHINE_TYPE)
+          .addInfo(EnumChatFormatting.RED.toString() + "DEPRECATED, PLANNED FOR REMOVAL.")
           .addInfo("Need a Data Orb to put in the Controller to work")
           .addInfo("Basic: ${GREEN(EU_PER_TICK_BASIC)} Eu/t, Unaffected by overclocking")
           .addInfo(

@@ -8,16 +8,6 @@ import gregtech.api.enums.Materials
 
 object RecipeLoader {
   fun load(@Suppress("UNUSED_PARAMETER") e: FMLPostInitializationEvent) {
-    GT_Values.RA.addAssemblerRecipe(
-        arrayOf(
-            AEApi.instance().definitions().blocks().iface().maybeStack(8).get(),
-            AEApi.instance().definitions().blocks().molecularAssembler().maybeStack(8).get(),
-            GTItemList.Emitter_IV.get(4),
-            GTItemList.Casing_RobustTungstenSteel.get(1),
-        ),
-        Materials.Plastic.getMolten(1296),
-        GTMetaTileEntityLoader.largeMolecularAssembler.getStackForm(1),
-        4800,
-        8000)
+
   }
 }
