@@ -4,7 +4,7 @@ import com.muxiu1997.mxrandom.MODID
 import com.muxiu1997.mxrandom.MXRandom.MTE_ID_OFFSET
 import com.muxiu1997.mxrandom.metatileentity.LargeMolecularAssembler
 import cpw.mods.fml.common.event.FMLInitializationEvent
-import gregtech.api.metatileentity.implementations.GT_MetaTileEntity_EnhancedMultiBlockBase
+import gregtech.api.metatileentity.implementations.MTEEnhancedMultiBlockBase
 
 object GTMetaTileEntityLoader {
   lateinit var largeMolecularAssembler: LargeMolecularAssembler
@@ -13,7 +13,7 @@ object GTMetaTileEntityLoader {
     largeMolecularAssembler = register(1, "Large Molecular Assembler")
   }
 
-  private inline fun <reified T : GT_MetaTileEntity_EnhancedMultiBlockBase<*>> register(
+  private inline fun <reified T : MTEEnhancedMultiBlockBase<*>> register(
       id: Int,
       name: String,
       unlocalizedName: String? = null

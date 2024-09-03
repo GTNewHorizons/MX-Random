@@ -32,18 +32,18 @@ import com.muxiu1997.mxrandom.network.container.ContainerConfigLargeMolecularAss
 import com.muxiu1997.mxrandom.network.message.MessageCraftingFX
 import com.muxiu1997.mxrandom.network.message.MessageSyncMetaTileEntityConfig
 import cpw.mods.fml.common.network.NetworkRegistry
-import gregtech.api.GregTech_API
+import gregtech.api.GregTechAPI
 import gregtech.api.enums.ItemList
 import gregtech.api.enums.Textures.BlockIcons
 import gregtech.api.interfaces.ITexture
 import gregtech.api.interfaces.metatileentity.IMetaTileEntity
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity
-import gregtech.api.metatileentity.implementations.GT_MetaTileEntity_EnhancedMultiBlockBase
+import gregtech.api.metatileentity.implementations.MTEEnhancedMultiBlockBase
 import gregtech.api.render.TextureFactory
-import gregtech.api.util.GT_Multiblock_Tooltip_Builder
-import gregtech.api.util.GT_StructureUtility.ofHatchAdder
-import gregtech.api.util.GT_Utility
-import gregtech.common.items.behaviors.Behaviour_DataOrb
+import gregtech.api.util.GTStructureUtility.ofHatchAdder
+import gregtech.api.util.GTUtility
+import gregtech.api.util.MultiblockTooltipBuilder
+import gregtech.common.items.behaviors.BehaviourDataOrb
 import io.netty.buffer.ByteBuf
 import java.util.*
 import kotlin.math.max
@@ -59,7 +59,7 @@ import net.minecraftforge.common.util.ForgeDirection
 
 @Deprecated("Planned for removal.")
 class LargeMolecularAssembler :
-    GT_MetaTileEntity_EnhancedMultiBlockBase<LargeMolecularAssembler>,
+    MTEEnhancedMultiBlockBase<LargeMolecularAssembler>,
     IConfigurableMetaTileEntity,
     ICraftingProvider,
     IActionHost,
@@ -89,7 +89,7 @@ class LargeMolecularAssembler :
 
   constructor(aName: String) : super(aName)
 
-  // region GT_MetaTileEntity_EnhancedMultiBlockBase
+  // region MTEEnhancedMultiBlockBase
   override fun newMetaEntity(iGregTechTileEntity: IGregTechTileEntity): IMetaTileEntity {
     return LargeMolecularAssembler(this.mName)
   }
@@ -124,7 +124,7 @@ class LargeMolecularAssembler :
       var craftingEUt = EU_PER_TICK_CRAFTING
       mEUt = -EU_PER_TICK_BASIC
       // Tier EU_PER_TICK_CRAFTING == 2
-      var extraTier = max(0, GT_Utility.getTier(maxInputVoltage).toInt() - 2)
+      var extraTier = max(0, GTUtility.getTier(maxInputVoltage).toInt() - 2)
       // The first two Overclocks reduce the Finish time to 0.5s and 0.25s
       for (i in 0 until 2) {
         if (extraTier <= 0) break
@@ -179,11 +179,11 @@ class LargeMolecularAssembler :
   override fun explodesOnComponentBreak(aStack: ItemStack?): Boolean = false
 
   @Suppress("FunctionName")
-  override fun createTooltip(): GT_Multiblock_Tooltip_Builder {
+  override fun createTooltip(): MultiblockTooltipBuilder {
     fun GREEN(thing: Any) = "${EnumChatFormatting.GREEN}$thing${EnumChatFormatting.GRAY}"
     fun WHITE(thing: Any) = "${EnumChatFormatting.WHITE}$thing${EnumChatFormatting.GRAY}"
     fun PURPLE(thing: Any) = "${EnumChatFormatting.DARK_PURPLE}$thing${EnumChatFormatting.GRAY}"
-    return GT_Multiblock_Tooltip_Builder().also {
+    return MultiblockTooltipBuilder().also {
       it.addMachineType(MACHINE_TYPE)
           .addInfo(EnumChatFormatting.RED.toString() + "DEPRECATED, PLANNED FOR REMOVAL.")
           .addInfo("Need a Data Orb to put in the Controller to work")
@@ -285,11 +285,11 @@ class LargeMolecularAssembler :
       return
     }
     val dataOrb = mInventory[1]
-    var dataTitle: String = Behaviour_DataOrb.getDataTitle(dataOrb)
+    var dataTitle: String = BehaviourDataOrb.getDataTitle(dataOrb)
     if (dataTitle.isEmpty()) {
       dataTitle = DATA_ORB_TITLE
-      Behaviour_DataOrb.setDataTitle(dataOrb, dataTitle)
-      Behaviour_DataOrb.setNBTInventory(dataOrb, emptyArray())
+      BehaviourDataOrb.setDataTitle(dataOrb, dataTitle)
+      BehaviourDataOrb.setNBTInventory(dataOrb, emptyArray())
     }
     if (dataTitle != DATA_ORB_TITLE) {
       cachedDataOrb = null
@@ -298,7 +298,7 @@ class LargeMolecularAssembler :
     }
     cachedDataOrb = dataOrb
     cachedAeJobs =
-        Behaviour_DataOrb.getNBTInventory(dataOrb).filterNotNull().toCollection(LinkedList())
+        BehaviourDataOrb.getNBTInventory(dataOrb).filterNotNull().toCollection(LinkedList())
     action(cachedDataOrb!!, cachedAeJobs!!)
   }
 
@@ -350,7 +350,7 @@ class LargeMolecularAssembler :
   private fun saveAeJobsIfNeeded() {
     if (!aeJobsDirty) return
     withAeJobs { dataOrb, aeJobs ->
-      Behaviour_DataOrb.setNBTInventory(dataOrb, aeJobs.toTypedArray())
+      BehaviourDataOrb.setNBTInventory(dataOrb, aeJobs.toTypedArray())
       markDirty()
       aeJobsDirty = false
     }
@@ -510,7 +510,7 @@ class LargeMolecularAssembler :
                 ofChain(
                     ofHatchAdder(
                         LargeMolecularAssembler::addToLargeMolecularAssemblerList, CASING_INDEX, 1),
-                    onElementPass({ it.casing++ }, ofBlock(GregTech_API.sBlockCasings4, 0)),
+                    onElementPass({ it.casing++ }, ofBlock(GregTechAPI.sBlockCasings4, 0)),
                 ))
             .addElement(
                 'G',
@@ -559,7 +559,7 @@ class LargeMolecularAssembler :
         val tag = isList.getCompoundTagAt(it)
         val isTag = tag.getCompoundTag("itemStack")
         val size = tag.getLong("size")
-        val itemStack = GT_Utility.loadItem(isTag)
+        val itemStack = GTUtility.loadItem(isTag)
         val aeIS = AEApi.instance().storage().createItemStack(itemStack)
         aeIS.stackSize = size
         this.add(aeIS)
