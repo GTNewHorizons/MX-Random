@@ -33,19 +33,19 @@ import com.muxiu1997.mxrandom.network.message.MessageCraftingFX
 import com.muxiu1997.mxrandom.network.message.MessageSyncMetaTileEntityConfig
 import cpw.mods.fml.common.FMLCommonHandler
 import cpw.mods.fml.common.network.NetworkRegistry
-import gregtech.api.GregTech_API
+import gregtech.api.GregTechAPI
 import gregtech.api.enums.ItemList
 import gregtech.api.enums.Textures.BlockIcons
 import gregtech.api.interfaces.ITexture
 import gregtech.api.interfaces.metatileentity.IMetaTileEntity
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity
-import gregtech.api.metatileentity.implementations.GT_MetaTileEntity_ExtendedPowerMultiBlockBase
+import gregtech.api.metatileentity.implementations.MTEExtendedPowerMultiBlockBase
 import gregtech.api.render.TextureFactory
-import gregtech.api.util.GT_Multiblock_Tooltip_Builder
-import gregtech.api.util.GT_StructureUtility.ofHatchAdder
-import gregtech.api.util.GT_Utility
-import gregtech.common.items.behaviors.Behaviour_DataOrb
-import gregtech.common.tileentities.machines.GT_MetaTileEntity_Hatch_CraftingInput_ME
+import gregtech.api.util.GTStructureUtility.ofHatchAdder
+import gregtech.api.util.GTUtility
+import gregtech.api.util.MultiblockTooltipBuilder
+import gregtech.common.items.behaviors.BehaviourDataOrb
+import gregtech.common.tileentities.machines.MTEHatchCraftingInputME
 import io.netty.buffer.ByteBuf
 import java.util.*
 import kotlin.collections.ArrayList
@@ -64,8 +64,8 @@ import net.minecraft.world.WorldServer
 import net.minecraftforge.common.util.Constants
 import net.minecraftforge.common.util.ForgeDirection
 
-class LargeMolecularAssembler :
-    GT_MetaTileEntity_ExtendedPowerMultiBlockBase<LargeMolecularAssembler>,
+class MTELargeMolecularAssembler :
+    MTEExtendedPowerMultiBlockBase<MTELargeMolecularAssembler>,
     IConfigurableMetaTileEntity,
     ICraftingProvider,
     IActionHost,
@@ -98,7 +98,7 @@ class LargeMolecularAssembler :
 
   // region GT_MetaTileEntity_EnhancedMultiBlockBase
   override fun newMetaEntity(iGregTechTileEntity: IGregTechTileEntity): IMetaTileEntity {
-    return LargeMolecularAssembler(this.mName)
+    return MTELargeMolecularAssembler(this.mName)
   }
 
   override fun getTexture(
@@ -131,7 +131,7 @@ class LargeMolecularAssembler :
       var craftingEUt = EU_PER_TICK_CRAFTING.toLong()
       mEUt = -EU_PER_TICK_BASIC
       // Tier EU_PER_TICK_CRAFTING == 2
-      var extraTier = max(0, GT_Utility.getTier(maxInputVoltage).toInt() - 2)
+      var extraTier = max(0, GTUtility.getTier(maxInputVoltage).toInt() - 2)
       // The first two Overclocks reduce the Finish time to 0.5s and 0.25s
       for (i in 0 until 2) {
         if (extraTier <= 0) break
@@ -187,11 +187,11 @@ class LargeMolecularAssembler :
   override fun explodesOnComponentBreak(aStack: ItemStack?): Boolean = false
 
   @Suppress("FunctionName")
-  override fun createTooltip(): GT_Multiblock_Tooltip_Builder {
+  override fun createTooltip(): MultiblockTooltipBuilder {
     fun GREEN(thing: Any) = "${EnumChatFormatting.GREEN}$thing${EnumChatFormatting.GRAY}"
     fun WHITE(thing: Any) = "${EnumChatFormatting.WHITE}$thing${EnumChatFormatting.GRAY}"
     fun PURPLE(thing: Any) = "${EnumChatFormatting.DARK_PURPLE}$thing${EnumChatFormatting.GRAY}"
-    return GT_Multiblock_Tooltip_Builder().also {
+    return MultiblockTooltipBuilder().also {
       it.addMachineType(MACHINE_TYPE)
           .addInfo("Need a Data Orb to put in the Controller to work")
           .addInfo("Basic: ${GREEN(EU_PER_TICK_BASIC)} Eu/t, Unaffected by overclocking")
@@ -245,7 +245,7 @@ class LargeMolecularAssembler :
         STRUCTURE_DEPTH_OFFSET)
   }
 
-  override fun getStructureDefinition(): IStructureDefinition<LargeMolecularAssembler> =
+  override fun getStructureDefinition(): IStructureDefinition<MTELargeMolecularAssembler> =
       STRUCTURE_DEFINITION
 
   override fun addOutput(stack: ItemStack): Boolean {
@@ -292,11 +292,11 @@ class LargeMolecularAssembler :
       return
     }
     val dataOrb: ItemStack = mInventory[1]
-    var dataTitle: String = Behaviour_DataOrb.getDataTitle(dataOrb)
+    var dataTitle: String = BehaviourDataOrb.getDataTitle(dataOrb)
     if (dataTitle.isEmpty()) {
       dataTitle = DATA_ORB_TITLE
-      Behaviour_DataOrb.setDataTitle(dataOrb, dataTitle)
-      Behaviour_DataOrb.setNBTInventory(dataOrb, emptyArray())
+      BehaviourDataOrb.setDataTitle(dataOrb, dataTitle)
+      BehaviourDataOrb.setNBTInventory(dataOrb, emptyArray())
     }
     if (dataTitle != DATA_ORB_TITLE) {
       cachedDataOrb = null
@@ -306,7 +306,7 @@ class LargeMolecularAssembler :
     cachedDataOrb = dataOrb
     if (dataOrb.stackTagCompound?.hasKey("Inventory", Constants.NBT.TAG_LIST) == true) {
       cachedAeJobs =
-          Behaviour_DataOrb.getNBTInventory(dataOrb).asSequence().filterNotNull().mapTo(
+          BehaviourDataOrb.getNBTInventory(dataOrb).asSequence().filterNotNull().mapTo(
               mutableListOf()) { listOf(it) }
     } else if (dataOrb.stackTagCompound?.hasKey(DATA_ORB_JOBS_KEY, Constants.NBT.TAG_LIST) ==
         true) {
@@ -317,7 +317,7 @@ class LargeMolecularAssembler :
               .map {
                 it.getTagList(DATA_ORB_JOBS_JOB_KEY, Constants.NBT.TAG_COMPOUND)
                     .asCompoundSequence()
-                    .map { GT_Utility.loadItem(it) }
+                    .map { GTUtility.loadItem(it) }
                     .toList()
               }
               .toMutableList()
@@ -379,7 +379,7 @@ class LargeMolecularAssembler :
           DATA_ORB_JOBS_KEY,
           aeJobs.mapToTagList { job ->
             NBTTagCompound().also {
-              it.setTag(DATA_ORB_JOBS_JOB_KEY, job.mapToTagList { GT_Utility.saveItem(it) })
+              it.setTag(DATA_ORB_JOBS_JOB_KEY, job.mapToTagList { GTUtility.saveItem(it) })
             }
           })
       markDirty()
@@ -390,9 +390,9 @@ class LargeMolecularAssembler :
   private fun issuePatternChangeIfNeeded(tick: Long) {
     if (tick % 20 != 0L) return
     val inputs =
-        GT_Utility.filterValidMTEs(mInputBusses)
+        GTUtility.filterValidMTEs(mInputBusses)
             .asSequence()
-            .filter { it !is GT_MetaTileEntity_Hatch_CraftingInput_ME }
+            .filter { it !is MTEHatchCraftingInputME }
             .flatMap { (0 until it.sizeInventory).asSequence().map { i -> it.getStackInSlot(i) } }
             .filterNotNull()
             .toSet()
@@ -534,7 +534,7 @@ class LargeMolecularAssembler :
 
     // region STRUCTURE_DEFINITION
     private val STRUCTURE_DEFINITION =
-        StructureDefinition.builder<LargeMolecularAssembler>()
+        StructureDefinition.builder<MTELargeMolecularAssembler>()
             .addShape(
                 STRUCTURE_PIECE_MAIN,
                 transpose(
@@ -549,8 +549,10 @@ class LargeMolecularAssembler :
                 'C',
                 ofChain(
                     ofHatchAdder(
-                        LargeMolecularAssembler::addToLargeMolecularAssemblerList, CASING_INDEX, 1),
-                    onElementPass({ it.casing++ }, ofBlock(GregTech_API.sBlockCasings4, 0)),
+                        MTELargeMolecularAssembler::addToLargeMolecularAssemblerList,
+                        CASING_INDEX,
+                        1),
+                    onElementPass({ it.casing++ }, ofBlock(GregTechAPI.sBlockCasings4, 0)),
                 ))
             .addElement(
                 'G',
@@ -599,7 +601,7 @@ class LargeMolecularAssembler :
         val tag = isList.getCompoundTagAt(it)
         val isTag = tag.getCompoundTag("itemStack")
         val size = tag.getLong("size")
-        val itemStack = GT_Utility.loadItem(isTag)
+        val itemStack = GTUtility.loadItem(isTag)
         val aeIS = AEApi.instance().storage().createItemStack(itemStack)
         aeIS.stackSize = size
         this.add(aeIS)

@@ -1,7 +1,7 @@
 package com.muxiu1997.mxrandom.client.gui
 
 import com.muxiu1997.mxrandom.MODID
-import com.muxiu1997.mxrandom.metatileentity.LargeMolecularAssembler
+import com.muxiu1997.mxrandom.metatileentity.MTELargeMolecularAssembler
 import com.muxiu1997.mxrandom.network.container.ContainerConfigLargeMolecularAssembler
 import java.awt.Color
 import net.minecraft.client.gui.GuiButton
@@ -11,7 +11,7 @@ import net.minecraft.util.StatCollector
 
 class GuiConfigLargeMolecularAssembler(GuiContainer: ContainerConfigLargeMolecularAssembler) :
     GuiContainer(GuiContainer) {
-  @Suppress("PrivatePropertyName") private val LMA: LargeMolecularAssembler = GuiContainer.LMA
+  @Suppress("PrivatePropertyName") private val LMA: MTELargeMolecularAssembler = GuiContainer.LMA
   private lateinit var buttonToggleCraftingFX: GuiButton
 
   init {
