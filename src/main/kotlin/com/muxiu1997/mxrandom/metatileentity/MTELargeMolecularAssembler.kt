@@ -139,21 +139,12 @@ class MTELargeMolecularAssembler :
         craftingEUt *= 4
         extraTier--
       }
-      var times = 2
-      // Subsequent Overclocks Double the number of Jobs finished at once to a Max of Integer.MAX
-      while (times > 0) {
-        if (extraTier <= 0) break
-        times *= 2
-        craftingEUt *= 4
-        extraTier--
-      }
-      if (times < 0) {
-        // overflow handling
-        times = Int.MAX_VALUE
-      }
-      val outputs = aeJobs.take(times).flatten()
+      // Subsequent Overclocks Double the number of Jobs finished at once
+      val parallel = 2 shl extraTier
+      craftingEUt = craftingEUt shl 2 * extraTier
+      val outputs = aeJobs.take(parallel).flatten()
       if (outputs.isNotEmpty()) {
-        aeJobs.subList(0, min(times, aeJobs.size)).clear()
+        aeJobs.subList(0, min(parallel, aeJobs.size)).clear()
         aeJobsDirty = true
         lEUt = -craftingEUt
         mMaxProgresstime = craftingProgressTime
@@ -200,7 +191,7 @@ class MTELargeMolecularAssembler :
           .addInfo("The first two Overclocks:")
           .addInfo("-Reduce the Finish time to ${WHITE(0.5)}s and ${WHITE(0.25)}s")
           .addInfo("Subsequent Overclocks:")
-          .addInfo("-Double the number of Jobs finished at once to a Max of ${WHITE(256)}")
+          .addInfo("-Double the number of Jobs finished at once")
           .addInfo("Use the screwdriver to right-click the Controller to open the config GUI")
           .addSeparator()
           .beginStructureBlock(5, 5, 5, true)
