@@ -31,6 +31,7 @@ import com.muxiu1997.mxrandom.client.gui.GuiConfigLargeMolecularAssembler
 import com.muxiu1997.mxrandom.network.container.ContainerConfigLargeMolecularAssembler
 import com.muxiu1997.mxrandom.network.message.MessageCraftingFX
 import com.muxiu1997.mxrandom.network.message.MessageSyncMetaTileEntityConfig
+import cpw.mods.fml.common.FMLCommonHandler
 import cpw.mods.fml.common.network.NetworkRegistry
 import gregtech.api.GregTechAPI
 import gregtech.api.enums.ItemList
@@ -38,28 +39,33 @@ import gregtech.api.enums.Textures.BlockIcons
 import gregtech.api.interfaces.ITexture
 import gregtech.api.interfaces.metatileentity.IMetaTileEntity
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity
-import gregtech.api.metatileentity.implementations.MTEEnhancedMultiBlockBase
+import gregtech.api.metatileentity.implementations.MTEExtendedPowerMultiBlockBase
 import gregtech.api.render.TextureFactory
 import gregtech.api.util.GTStructureUtility.ofHatchAdder
 import gregtech.api.util.GTUtility
 import gregtech.api.util.MultiblockTooltipBuilder
 import gregtech.common.items.behaviors.BehaviourDataOrb
+import gregtech.common.tileentities.machines.MTEHatchCraftingInputME
 import io.netty.buffer.ByteBuf
 import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.math.max
+import kotlin.math.min
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.entity.player.EntityPlayerMP
 import net.minecraft.inventory.InventoryCrafting
 import net.minecraft.item.ItemStack
+import net.minecraft.nbt.NBTBase
 import net.minecraft.nbt.NBTTagCompound
 import net.minecraft.nbt.NBTTagList
 import net.minecraft.util.EnumChatFormatting
 import net.minecraft.world.World
+import net.minecraft.world.WorldServer
+import net.minecraftforge.common.util.Constants
 import net.minecraftforge.common.util.ForgeDirection
 
-@Deprecated("Planned for removal.")
-class LargeMolecularAssembler :
-    MTEEnhancedMultiBlockBase<LargeMolecularAssembler>,
+class MTELargeMolecularAssembler :
+    MTEExtendedPowerMultiBlockBase<MTELargeMolecularAssembler>,
     IConfigurableMetaTileEntity,
     ICraftingProvider,
     IActionHost,
@@ -69,15 +75,16 @@ class LargeMolecularAssembler :
   private var craftingDisplayPoint: CraftingDisplayPoint? = null
 
   private var cachedDataOrb: ItemStack? = null
-  private var cachedAeJobs: LinkedList<ItemStack>? = LinkedList()
+  private var cachedAeJobs: MutableList<List<ItemStack>>? = ArrayList()
   private var aeJobsDirty = false
 
-  private var cachedPatterns: List<ItemStack> = emptyList()
-  private var cachedRawPatterns: List<ItemStack> = emptyList()
   private var cachedPatternDetails: List<ICraftingPatternDetails> = emptyList()
+  private val patternDetailCache:
+      MutableMap<ItemStack, Pair<NBTTagCompound, ICraftingPatternDetails>> =
+      IdentityHashMap()
 
   private var requestSource: BaseActionSource? = null
-  private var cachedOutputs = AEApi.instance().storage().createItemList()
+  private var cachedOutputs = AEApi.instance().storage().createPrimitiveItemList()
   private var lastOutputFailed = false
   private var lastOutputTick: Long = 0
   private var tickCounter: Long = 0
@@ -89,9 +96,9 @@ class LargeMolecularAssembler :
 
   constructor(aName: String) : super(aName)
 
-  // region MTEEnhancedMultiBlockBase
+  // region GT_MetaTileEntity_EnhancedMultiBlockBase
   override fun newMetaEntity(iGregTechTileEntity: IGregTechTileEntity): IMetaTileEntity {
-    return LargeMolecularAssembler(this.mName)
+    return MTELargeMolecularAssembler(this.mName)
   }
 
   override fun getTexture(
@@ -121,7 +128,7 @@ class LargeMolecularAssembler :
     withAeJobs { _, aeJobs ->
       mMaxProgresstime = 20
       var craftingProgressTime = 20
-      var craftingEUt = EU_PER_TICK_CRAFTING
+      var craftingEUt = EU_PER_TICK_CRAFTING.toLong()
       mEUt = -EU_PER_TICK_BASIC
       // Tier EU_PER_TICK_CRAFTING == 2
       var extraTier = max(0, GTUtility.getTier(maxInputVoltage).toInt() - 2)
@@ -132,25 +139,17 @@ class LargeMolecularAssembler :
         craftingEUt *= 4
         extraTier--
       }
-      var times = 2
-      // Subsequent Overclocks Double the number of Jobs finished at once to a Max of 256"
-      while (times < 256) {
-        if (extraTier <= 0) break
-        times *= 2
-        craftingEUt *= 4
-        extraTier--
-      }
-      val outputs = LinkedList<ItemStack>()
-      for (i in 0 until times) {
-        if (aeJobs.isEmpty()) break
-        outputs.addFirst(aeJobs.removeFirst())
-        aeJobsDirty = true
-      }
+      // Subsequent Overclocks Double the number of Jobs finished at once
+      val parallel = 2 shl extraTier
+      craftingEUt = craftingEUt shl 2 * extraTier
+      val outputs = aeJobs.take(parallel).flatten()
       if (outputs.isNotEmpty()) {
-        mEUt = -craftingEUt
+        aeJobs.subList(0, min(parallel, aeJobs.size)).clear()
+        aeJobsDirty = true
+        lEUt = -craftingEUt
         mMaxProgresstime = craftingProgressTime
         mOutputItems = outputs.toTypedArray()
-        addCraftingFX(outputs.first)
+        addCraftingFX(outputs[0])
       }
       mEfficiency = 10000 - (idealStatus - repairStatus) * 1000
       mEfficiencyIncrease = 10000
@@ -185,7 +184,6 @@ class LargeMolecularAssembler :
     fun PURPLE(thing: Any) = "${EnumChatFormatting.DARK_PURPLE}$thing${EnumChatFormatting.GRAY}"
     return MultiblockTooltipBuilder().also {
       it.addMachineType(MACHINE_TYPE)
-          .addInfo(EnumChatFormatting.RED.toString() + "DEPRECATED, PLANNED FOR REMOVAL.")
           .addInfo("Need a Data Orb to put in the Controller to work")
           .addInfo("Basic: ${GREEN(EU_PER_TICK_BASIC)} Eu/t, Unaffected by overclocking")
           .addInfo(
@@ -193,7 +191,7 @@ class LargeMolecularAssembler :
           .addInfo("The first two Overclocks:")
           .addInfo("-Reduce the Finish time to ${WHITE(0.5)}s and ${WHITE(0.25)}s")
           .addInfo("Subsequent Overclocks:")
-          .addInfo("-Double the number of Jobs finished at once to a Max of ${WHITE(256)}")
+          .addInfo("-Double the number of Jobs finished at once")
           .addInfo("Use the screwdriver to right-click the Controller to open the config GUI")
           .addSeparator()
           .beginStructureBlock(5, 5, 5, true)
@@ -238,7 +236,7 @@ class LargeMolecularAssembler :
         STRUCTURE_DEPTH_OFFSET)
   }
 
-  override fun getStructureDefinition(): IStructureDefinition<LargeMolecularAssembler> =
+  override fun getStructureDefinition(): IStructureDefinition<MTELargeMolecularAssembler> =
       STRUCTURE_DEFINITION
 
   override fun addOutput(stack: ItemStack): Boolean {
@@ -273,7 +271,7 @@ class LargeMolecularAssembler :
   // endregion
 
   private inline fun withAeJobs(
-      action: (dataOrb: ItemStack, aeJobs: LinkedList<ItemStack>) -> Unit
+      action: (dataOrb: ItemStack, aeJobs: MutableList<List<ItemStack>>) -> Unit
   ) {
     if (mInventory[1] === cachedDataOrb && cachedDataOrb != null) {
       action(cachedDataOrb!!, cachedAeJobs!!)
@@ -284,7 +282,7 @@ class LargeMolecularAssembler :
       cachedAeJobs = null
       return
     }
-    val dataOrb = mInventory[1]
+    val dataOrb: ItemStack = mInventory[1]
     var dataTitle: String = BehaviourDataOrb.getDataTitle(dataOrb)
     if (dataTitle.isEmpty()) {
       dataTitle = DATA_ORB_TITLE
@@ -297,8 +295,26 @@ class LargeMolecularAssembler :
       return
     }
     cachedDataOrb = dataOrb
-    cachedAeJobs =
-        BehaviourDataOrb.getNBTInventory(dataOrb).filterNotNull().toCollection(LinkedList())
+    if (dataOrb.stackTagCompound?.hasKey("Inventory", Constants.NBT.TAG_LIST) == true) {
+      cachedAeJobs =
+          BehaviourDataOrb.getNBTInventory(dataOrb).asSequence().filterNotNull().mapTo(
+              mutableListOf()) { listOf(it) }
+    } else if (dataOrb.stackTagCompound?.hasKey(DATA_ORB_JOBS_KEY, Constants.NBT.TAG_LIST) ==
+        true) {
+      cachedAeJobs =
+          dataOrb.stackTagCompound
+              .getTagList(DATA_ORB_JOBS_KEY, Constants.NBT.TAG_COMPOUND)
+              .asCompoundSequence()
+              .map {
+                it.getTagList(DATA_ORB_JOBS_JOB_KEY, Constants.NBT.TAG_COMPOUND)
+                    .asCompoundSequence()
+                    .map { GTUtility.loadItem(it) }
+                    .toList()
+              }
+              .toMutableList()
+    } else {
+      cachedAeJobs = mutableListOf()
+    }
     action(cachedDataOrb!!, cachedAeJobs!!)
   }
 
@@ -350,7 +366,13 @@ class LargeMolecularAssembler :
   private fun saveAeJobsIfNeeded() {
     if (!aeJobsDirty) return
     withAeJobs { dataOrb, aeJobs ->
-      BehaviourDataOrb.setNBTInventory(dataOrb, aeJobs.toTypedArray())
+      dataOrb.stackTagCompound.setTag(
+          DATA_ORB_JOBS_KEY,
+          aeJobs.mapToTagList { job ->
+            NBTTagCompound().also {
+              it.setTag(DATA_ORB_JOBS_JOB_KEY, job.mapToTagList { GTUtility.saveItem(it) })
+            }
+          })
       markDirty()
       aeJobsDirty = false
     }
@@ -358,19 +380,27 @@ class LargeMolecularAssembler :
 
   private fun issuePatternChangeIfNeeded(tick: Long) {
     if (tick % 20 != 0L) return
-    compactedInputs.let { inputs ->
-      if (storedInputs.equals(cachedRawPatterns)) return
-      cachedRawPatterns = ArrayList(storedInputs)
-      val patterns = inputs.filter { it.getPattern(baseMetaTileEntity.world)?.isCraftable == true }
-      if (patterns == cachedPatterns) return
-      cachedPatterns = patterns
-      cachedPatternDetails = patterns.map { it.getPattern(baseMetaTileEntity.world)!! }
-      proxy?.let {
-        try {
-          it.grid.postEvent(MENetworkCraftingPatternChange(this, it.node))
-        } catch (ignored: GridAccessException) {
-          // Do nothing
-        }
+    val inputs =
+        GTUtility.filterValidMTEs(mInputBusses)
+            .asSequence()
+            .filter { it !is MTEHatchCraftingInputME }
+            .flatMap { (0 until it.sizeInventory).asSequence().map { i -> it.getStackInSlot(i) } }
+            .filterNotNull()
+            .toSet()
+    val patterns =
+        inputs
+            .map { it.getPattern(baseMetaTileEntity.world) }
+            .filterNotNull()
+            .filter { it.isCraftable }
+            .toList()
+    if (patterns == cachedPatternDetails) return
+    cachedPatternDetails = patterns
+    patternDetailCache.keys.retainAll(inputs)
+    proxy?.let {
+      try {
+        it.grid.postEvent(MENetworkCraftingPatternChange(this, it.node))
+      } catch (ignored: GridAccessException) {
+        // Do nothing
       }
     }
   }
@@ -429,11 +459,10 @@ class LargeMolecularAssembler :
       table: InventoryCrafting
   ): Boolean {
     withAeJobs { _, aeJobs ->
-      if (aeJobs.size < 256) {
-        aeJobs.add(patternDetails.getOutput(table, baseMetaTileEntity.world))
-        aeJobsDirty = true
-        return true
-      }
+      aeJobs.add(
+          patternDetails.getOutputs(table, baseMetaTileEntity.world)?.toList() ?: return false)
+      aeJobsDirty = true
+      return true
     }
     return false
   }
@@ -479,6 +508,8 @@ class LargeMolecularAssembler :
   // endregion
 
   companion object {
+    private const val DATA_ORB_JOBS_KEY = "MX-CraftingJobs"
+    private const val DATA_ORB_JOBS_JOB_KEY = "Job"
     private const val MACHINE_TYPE = "Molecular Assembler"
     private const val EU_PER_TICK_BASIC = 16
     private const val EU_PER_TICK_CRAFTING = 64
@@ -494,7 +525,7 @@ class LargeMolecularAssembler :
 
     // region STRUCTURE_DEFINITION
     private val STRUCTURE_DEFINITION =
-        StructureDefinition.builder<LargeMolecularAssembler>()
+        StructureDefinition.builder<MTELargeMolecularAssembler>()
             .addShape(
                 STRUCTURE_PIECE_MAIN,
                 transpose(
@@ -509,7 +540,9 @@ class LargeMolecularAssembler :
                 'C',
                 ofChain(
                     ofHatchAdder(
-                        LargeMolecularAssembler::addToLargeMolecularAssemblerList, CASING_INDEX, 1),
+                        MTELargeMolecularAssembler::addToLargeMolecularAssemblerList,
+                        CASING_INDEX,
+                        1),
                     onElementPass({ it.casing++ }, ofBlock(GregTechAPI.sBlockCasings4, 0)),
                 ))
             .addElement(
@@ -567,10 +600,41 @@ class LargeMolecularAssembler :
     }
     // endregion
 
-    private fun ItemStack.getPattern(w: World): ICraftingPatternDetails? {
-      val item = this.item
-      if (item !is ItemEncodedPattern) return null
-      return item.getPatternForItem(this, w)
+    private fun ICraftingPatternDetails.getOutputs(
+        ic: InventoryCrafting,
+        w: World
+    ): Sequence<ItemStack>? {
+      val mainOutput = getOutput(ic, w) ?: return null
+      FMLCommonHandler.instance()
+          .firePlayerCraftingEvent(Platform.getPlayer(w as WorldServer), mainOutput, ic)
+      val leftover =
+          (0..ic.sizeInventory)
+              .asSequence()
+              .map { Platform.getContainerItem(ic.getStackInSlot(it)) }
+              .filterNotNull() + mainOutput
+      return leftover
     }
+
+    private fun NBTTagList.asCompoundSequence(): Sequence<NBTTagCompound> {
+      return (0..tagCount()).asSequence().map { getCompoundTagAt(it) }
+    }
+
+    private inline fun <T> Iterable<T>.mapToTagList(action: (T) -> NBTBase): NBTTagList =
+        NBTTagList().also { for (e in this) it.appendTag(action(e)) }
+  }
+
+  private fun ItemStack.getPattern(w: World): ICraftingPatternDetails? {
+    val item = this.item
+    if (item !is ItemEncodedPattern) return null
+    val (tag, detail) = patternDetailCache[this] ?: return getPatternRaw(w)
+    if (tag !== this.stackTagCompound) return getPatternRaw(w)
+    return detail
+  }
+
+  private fun ItemStack.getPatternRaw(w: World): ICraftingPatternDetails {
+    val item = this.item as ItemEncodedPattern
+    val detail = item.getPatternForItem(this, w)
+    patternDetailCache[this] = Pair(stackTagCompound, detail)
+    return detail
   }
 }
