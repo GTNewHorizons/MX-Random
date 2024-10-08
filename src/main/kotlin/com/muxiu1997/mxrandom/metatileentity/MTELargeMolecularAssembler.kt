@@ -24,7 +24,6 @@ import com.gtnewhorizon.structurelib.structure.IStructureDefinition
 import com.gtnewhorizon.structurelib.structure.IStructureElementCheckOnly
 import com.gtnewhorizon.structurelib.structure.StructureDefinition
 import com.gtnewhorizon.structurelib.structure.StructureUtility.*
-import com.muxiu1997.mxrandom.MODNAME
 import com.muxiu1997.mxrandom.MXRandom.network
 import com.muxiu1997.mxrandom.api.IConfigurableMetaTileEntity
 import com.muxiu1997.mxrandom.client.gui.GuiConfigLargeMolecularAssembler
@@ -181,10 +180,9 @@ class MTELargeMolecularAssembler :
   override fun createTooltip(): MultiblockTooltipBuilder {
     fun GREEN(thing: Any) = "${EnumChatFormatting.GREEN}$thing${EnumChatFormatting.GRAY}"
     fun WHITE(thing: Any) = "${EnumChatFormatting.WHITE}$thing${EnumChatFormatting.GRAY}"
-    fun PURPLE(thing: Any) = "${EnumChatFormatting.DARK_PURPLE}$thing${EnumChatFormatting.GRAY}"
     return MultiblockTooltipBuilder().also {
       it.addMachineType(MACHINE_TYPE)
-          .addInfo("Need a Data Orb to put in the Controller to work")
+          .addInfo("Needs a Data Orb to be placed in the controller")
           .addInfo("Basic: ${GREEN(EU_PER_TICK_BASIC)} Eu/t, Unaffected by overclocking")
           .addInfo(
               "Crafting: ${GREEN(EU_PER_TICK_CRAFTING)} Eu/t, Finish ${WHITE(2)} Jobs in ${WHITE(1)}s")
@@ -193,14 +191,13 @@ class MTELargeMolecularAssembler :
           .addInfo("Subsequent Overclocks:")
           .addInfo("-Double the number of Jobs finished at once")
           .addInfo("Use the screwdriver to right-click the Controller to open the config GUI")
-          .addSeparator()
           .beginStructureBlock(5, 5, 5, true)
           .addController("Front center")
           .addCasingInfoMin("Robust Tungstensteel Machine Casing", MIN_CASING_COUNT, false)
           .addInputBus("Any casing", 1)
           .addEnergyHatch("Any casing", 1)
           .addMaintenanceHatch("Any casing", 1)
-          .toolTipFinisher(PURPLE(MODNAME))
+          .toolTipFinisher()
     }
   }
 
