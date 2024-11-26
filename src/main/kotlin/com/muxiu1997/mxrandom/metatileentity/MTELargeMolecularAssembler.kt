@@ -15,8 +15,10 @@ import appeng.api.networking.security.MachineSource
 import appeng.api.storage.data.IAEItemStack
 import appeng.api.storage.data.IItemList
 import appeng.api.util.DimensionalCoord
+import appeng.core.worlddata.WorldData
 import appeng.items.misc.ItemEncodedPattern
 import appeng.me.GridAccessException
+import appeng.me.GridNode
 import appeng.me.helpers.AENetworkProxy
 import appeng.me.helpers.IGridProxyable
 import appeng.util.Platform
@@ -24,6 +26,7 @@ import com.gtnewhorizon.structurelib.structure.IStructureDefinition
 import com.gtnewhorizon.structurelib.structure.IStructureElementCheckOnly
 import com.gtnewhorizon.structurelib.structure.StructureDefinition
 import com.gtnewhorizon.structurelib.structure.StructureUtility.*
+import com.muxiu1997.mxrandom.MXRandom
 import com.muxiu1997.mxrandom.MXRandom.network
 import com.muxiu1997.mxrandom.api.IConfigurableMetaTileEntity
 import com.muxiu1997.mxrandom.client.gui.GuiConfigLargeMolecularAssembler
@@ -38,6 +41,7 @@ import gregtech.api.enums.Textures.BlockIcons
 import gregtech.api.interfaces.ITexture
 import gregtech.api.interfaces.metatileentity.IMetaTileEntity
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity
+import gregtech.api.metatileentity.BaseMetaTileEntity
 import gregtech.api.metatileentity.implementations.MTEExtendedPowerMultiBlockBase
 import gregtech.api.render.TextureFactory
 import gregtech.api.util.GTStructureUtility.ofHatchAdder
@@ -162,12 +166,16 @@ class MTELargeMolecularAssembler :
     super.saveNBTData(nbt)
     cachedOutputs.saveNBTData(nbt, NBT_KEY_CACHED_OUTPUTS)
     nbt.setBoolean(NBT_KEY_CONFIG_HIDDEN_CRAFTING_FX, hiddenCraftingFX)
+    var proxyTag = NBTTagCompound()
+    proxy?.writeToNBT(proxyTag)
+    nbt.setTag("proxy", proxyTag)
   }
 
   override fun loadNBTData(nbt: NBTTagCompound) {
     super.loadNBTData(nbt)
     cachedOutputs.loadNBTData(nbt, NBT_KEY_CACHED_OUTPUTS)
     hiddenCraftingFX = nbt.getBoolean(NBT_KEY_CONFIG_HIDDEN_CRAFTING_FX)
+    if (nbt.hasKey("proxy")) proxy?.readFromNBT(nbt.getCompoundTag("proxy"))
   }
 
   override fun getMaxEfficiency(aStack: ItemStack?): Int = 10000
@@ -403,18 +411,39 @@ class MTELargeMolecularAssembler :
   }
 
   private fun syncAEProxyActive(baseMetaTileEntity: IGregTechTileEntity) {
-    if (gridProxy == null) {
-      gridProxy =
-          AENetworkProxy(this, "proxy", this.getStackForm(1), true).apply {
-            setFlags(GridFlags.REQUIRE_CHANNEL)
-          }
-    }
 
     proxy?.run {
       if (baseMetaTileEntity.isActive) {
-        if (!isReady) onReady()
+        if (!isReady) {
+          onReady()
+          if (getProxy()?.getNode()?.getPlayerID() == -1) {
+
+            MXRandom.logger.warn(
+                "Found a LMA at [${(getBaseMetaTileEntity() as BaseMetaTileEntity).getLocation().toString()}] without valid AE playerID.")
+            MXRandom.logger.warn(
+                "Try to recover playerID with UUID:${getBaseMetaTileEntity().getOwnerUuid()}")
+            // recover ID from old version
+            var playerAEID =
+                WorldData.instance()
+                    .playerData()
+                    .getPlayerID(
+                        com.mojang.authlib.GameProfile(
+                            getBaseMetaTileEntity().getOwnerUuid(),
+                            getBaseMetaTileEntity().getOwnerName()))
+
+            getProxy()?.getNode()?.setPlayerID(playerAEID)
+            var node = getProxy()?.getNode() as GridNode?
+            node?.setLastSecurityKey(-1L)
+            getProxy()?.getNode()?.updateState() // refresh the security connection
+            MXRandom.logger.warn("Now it has playerID:[$playerAEID]")
+          }
+        }
+
+        if (getProxy()?.getConnectableSides()!!.isEmpty())
+            getProxy()?.setValidSides(EnumSet.complementOf(EnumSet.of(ForgeDirection.UNKNOWN)))
       } else {
-        if (isReady) invalidate()
+        if (!getProxy()?.getConnectableSides()!!.isEmpty())
+            getProxy()?.setValidSides(EnumSet.noneOf(ForgeDirection::class.java))
       }
     }
   }
@@ -480,6 +509,18 @@ class MTELargeMolecularAssembler :
   private var gridProxy: AENetworkProxy? = null
 
   override fun getProxy(): AENetworkProxy? {
+    if (gridProxy == null) {
+      gridProxy = AENetworkProxy(this, "proxy", this.getStackForm(1), true)
+      gridProxy?.setFlags(GridFlags.REQUIRE_CHANNEL)
+      if (getBaseMetaTileEntity().getWorld() != null) {
+        val owner =
+            getBaseMetaTileEntity()
+                .getWorld()
+                .getPlayerEntityByName(getBaseMetaTileEntity().getOwnerName())
+        gridProxy?.setOwner(owner)
+      }
+    }
+
     return gridProxy
   }
 
