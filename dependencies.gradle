@@ -2,8 +2,8 @@
 
 dependencies {
     api 'com.github.GTNewHorizons:Forgelin:1.10.0-GTNH'
-    implementation 'com.github.GTNewHorizons:GT5-Unofficial:5.09.50.41:dev'
-    implementation 'com.github.GTNewHorizons:Applied-Energistics-2-Unofficial:rv3-beta-468-GTNH:dev'
+    implementation 'com.github.GTNewHorizons:GT5-Unofficial:5.09.50.81:dev'
+    implementation 'com.github.GTNewHorizons:Applied-Energistics-2-Unofficial:rv3-beta-478-GTNH:dev'
 
     implementation 'net.industrial-craft:industrialcraft-2:2.2.828-experimental:dev'
 }
