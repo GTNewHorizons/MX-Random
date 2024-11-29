@@ -419,17 +419,16 @@ class MTELargeMolecularAssembler :
           if (getProxy()?.getNode()?.getPlayerID() == -1) {
 
             MXRandom.logger.warn(
-                "Found a LMA at [${(getBaseMetaTileEntity() as BaseMetaTileEntity).getLocation().toString()}] without valid AE playerID.")
+                "Found a LMA at [${(baseMetaTileEntity as BaseMetaTileEntity).getLocation().toString()}] without valid AE playerID.")
             MXRandom.logger.warn(
-                "Try to recover playerID with UUID:${getBaseMetaTileEntity().getOwnerUuid()}")
+                "Try to recover playerID with UUID:${baseMetaTileEntity.getOwnerUuid()}")
             // recover ID from old version
             var playerAEID =
                 WorldData.instance()
                     .playerData()
                     .getPlayerID(
                         com.mojang.authlib.GameProfile(
-                            getBaseMetaTileEntity().getOwnerUuid(),
-                            getBaseMetaTileEntity().getOwnerName()))
+                            baseMetaTileEntity.getOwnerUuid(), baseMetaTileEntity.getOwnerName()))
 
             getProxy()?.getNode()?.setPlayerID(playerAEID)
             var node = getProxy()?.getNode() as GridNode?
