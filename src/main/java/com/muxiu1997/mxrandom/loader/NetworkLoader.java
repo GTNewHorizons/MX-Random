@@ -11,16 +11,16 @@ import cpw.mods.fml.relauncher.Side;
 public class NetworkLoader {
 
     public static void load() {
-        MXRandom.network.registerMessage(MessageCraftingFX.Handler.class, MessageCraftingFX.class, 0, Side.CLIENT);
+        MXRandom.network.registerMessage(new MessageCraftingFX.Handler(), MessageCraftingFX.class, 0, Side.CLIENT);
         MXRandom.network.registerMessage(
-                MessageSyncMetaTileEntityConfig.Handler.class,
+                new MessageSyncMetaTileEntityConfig.Handler(),
                 MessageSyncMetaTileEntityConfig.class,
                 1,
                 Side.SERVER);
         MXRandom.network.registerMessage(
-                MessageSyncMetaTileEntityConfig.Handler.class,
+                new MessageSyncMetaTileEntityConfig.Handler(),
                 MessageSyncMetaTileEntityConfig.class,
-                1,
+                2,
                 Side.CLIENT);
 
         NetworkRegistry.INSTANCE.registerGuiHandler(MXRandom.MODID, new GuiHandler());
