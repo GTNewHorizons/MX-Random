@@ -63,10 +63,16 @@ public class MessageCraftingFX implements IMessage {
 
     public static class Handler implements IMessageHandler<MessageCraftingFX, IMessage> {
 
-        @SideOnly(Side.CLIENT)
         @Override
         public IMessage onMessage(MessageCraftingFX message, MessageContext ctx) {
-            if (ctx.side != Side.CLIENT) return null;
+            if (ctx.side == Side.CLIENT) {
+                spawnFX(message);
+            }
+            return null;
+        }
+
+        @SideOnly(Side.CLIENT)
+        private void spawnFX(MessageCraftingFX message) {
             CraftingFX fx = new CraftingFX(
                     Minecraft.getMinecraft().theWorld,
                     message.x,
@@ -75,7 +81,6 @@ public class MessageCraftingFX implements IMessage {
                     message.age,
                     message.itemStack);
             Minecraft.getMinecraft().effectRenderer.addEffect(fx);
-            return null;
         }
     }
 }
