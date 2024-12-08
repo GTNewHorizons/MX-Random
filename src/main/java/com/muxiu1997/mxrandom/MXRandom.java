@@ -3,7 +3,7 @@ package com.muxiu1997.mxrandom;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.muxiu.mxrandom.Tags;
+import com.muxiu1997.mxrandom.Tags;
 import com.muxiu1997.mxrandom.loader.GTMetaTileEntityLoader;
 import com.muxiu1997.mxrandom.loader.NetworkLoader;
 import com.muxiu1997.mxrandom.loader.RecipeLoader;
