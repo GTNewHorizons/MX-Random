@@ -524,6 +524,9 @@ public class MTELargeMolecularAssembler extends MTEExtendedPowerMultiBlockBase<M
             return entry.getValue();
         }).filter(Objects::nonNull).filter(it -> ((ICraftingPatternDetails) it).isCraftable())
                 .collect(Collectors.toList());
+        if (patterns.equals(cachedPatternDetails)) return;
+        cachedPatternDetails = patterns;
+        patternDetailCache.keySet().retainAll(inputs);
 
         try {
             AENetworkProxy proxy = getProxy();
@@ -533,9 +536,9 @@ public class MTELargeMolecularAssembler extends MTEExtendedPowerMultiBlockBase<M
     }
 
     private void syncAEProxyActive(IGregTechTileEntity baseMetaTileEntity) {
+        AENetworkProxy proxy = getProxy();
+        if (proxy == null) return;
         if (baseMetaTileEntity.isActive()) {
-            AENetworkProxy proxy = getProxy();
-            if (proxy == null) return;
             if (!proxy.isReady()) {
                 proxy.onReady();
                 IGridNode node = proxy.getNode();
@@ -557,10 +560,10 @@ public class MTELargeMolecularAssembler extends MTEExtendedPowerMultiBlockBase<M
 
             if (proxy.getConnectableSides().isEmpty()) {
                 proxy.setValidSides(EnumSet.complementOf(EnumSet.of(ForgeDirection.UNKNOWN)));
-            } else {
-                if (!proxy.getConnectableSides().isEmpty()) {
-                    proxy.setValidSides(EnumSet.noneOf(ForgeDirection.class));
-                }
+            }
+        } else {
+            if (!proxy.getConnectableSides().isEmpty()) {
+                proxy.setValidSides(EnumSet.noneOf(ForgeDirection.class));
             }
         }
     }
