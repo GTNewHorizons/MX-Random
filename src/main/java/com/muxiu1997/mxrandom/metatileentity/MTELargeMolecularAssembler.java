@@ -459,12 +459,14 @@ public class MTELargeMolecularAssembler extends MTEExtendedPowerMultiBlockBase<M
 
         lastOutputFailed = true;
         try {
-            IMEMonitor<IAEItemStack> storage = getProxy().getStorage().getItemInventory();
+            AENetworkProxy proxy = getProxy();
+            if (proxy == null) return;
+            IMEMonitor<IAEItemStack> storage = proxy.getStorage().getItemInventory();
             for (IAEItemStack s : cachedOutputs) {
                 if (s.getStackSize() == 0) {
                     continue;
                 }
-                IAEItemStack rest = Platform.poweredInsert(getProxy().getEnergy(), storage, s, getRequest());
+                IAEItemStack rest = Platform.poweredInsert(proxy.getEnergy(), storage, s, getRequest());
                 if (rest != null && rest.getStackSize() > 0) {
                     lastOutputFailed = true;
                     s.setStackSize(rest.getStackSize());
@@ -524,15 +526,21 @@ public class MTELargeMolecularAssembler extends MTEExtendedPowerMultiBlockBase<M
                 .collect(Collectors.toList());
 
         try {
-            getProxy().getGrid().postEvent(new MENetworkCraftingPatternChange(this, getProxy().getNode()));
+            AENetworkProxy proxy = getProxy();
+            if (proxy == null) return;
+            proxy.getGrid().postEvent(new MENetworkCraftingPatternChange(this, getProxy().getNode()));
         } catch (GridAccessException ignored) {}
     }
 
     private void syncAEProxyActive(IGregTechTileEntity baseMetaTileEntity) {
         if (baseMetaTileEntity.isActive()) {
-            if (!getProxy().isReady()) {
-                getProxy().onReady();
-                if (getProxy().getNode().getPlayerID() == -1) {
+            AENetworkProxy proxy = getProxy();
+            if (proxy == null) return;
+            if (!proxy.isReady()) {
+                proxy.onReady();
+                IGridNode node = proxy.getNode();
+                if (node == null) return;
+                if (node.getPlayerID() == -1) {
                     MXRandom.logger.warn(
                             "Found a LMA at {} without valid AE playerID.",
                             ((BaseMetaTileEntity) baseMetaTileEntity).getLocation());
@@ -540,19 +548,18 @@ public class MTELargeMolecularAssembler extends MTEExtendedPowerMultiBlockBase<M
                     // recover ID from old version
                     int playerAEID = WorldData.instance().playerData().getPlayerID(
                             new GameProfile(baseMetaTileEntity.getOwnerUuid(), baseMetaTileEntity.getOwnerName()));
-                    getProxy().getNode().setPlayerID(playerAEID);
-                    GridNode node = (GridNode) getProxy().getNode();
-                    node.setLastSecurityKey(-1);
-                    getProxy().getNode().updateState(); // refresh the security connection
+                    node.setPlayerID(playerAEID);
+                    ((GridNode) node).setLastSecurityKey(-1);
+                    node.updateState(); // refresh the security connection
                     MXRandom.logger.warn("Now it has playerID: {}", playerAEID);
                 }
             }
 
-            if (getProxy().getConnectableSides().isEmpty()) {
-                getProxy().setValidSides(EnumSet.complementOf(EnumSet.of(ForgeDirection.UNKNOWN)));
+            if (proxy.getConnectableSides().isEmpty()) {
+                proxy.setValidSides(EnumSet.complementOf(EnumSet.of(ForgeDirection.UNKNOWN)));
             } else {
-                if (!getProxy().getConnectableSides().isEmpty()) {
-                    getProxy().setValidSides(EnumSet.noneOf(ForgeDirection.class));
+                if (!proxy.getConnectableSides().isEmpty()) {
+                    proxy.setValidSides(EnumSet.noneOf(ForgeDirection.class));
                 }
             }
         }
@@ -611,7 +618,9 @@ public class MTELargeMolecularAssembler extends MTEExtendedPowerMultiBlockBase<M
 
     @Override
     public void provideCrafting(ICraftingProviderHelper craftingTracker) {
-        if (getProxy().isReady()) {
+        AENetworkProxy proxy = getProxy();
+        if (proxy == null) return;
+        if (proxy.isReady()) {
             for (ICraftingPatternDetails detail : cachedPatternDetails) {
                 craftingTracker.addCraftingOption(this, detail);
             }
@@ -634,7 +643,9 @@ public class MTELargeMolecularAssembler extends MTEExtendedPowerMultiBlockBase<M
 
     @Override
     public IGridNode getGridNode(ForgeDirection dir) {
-        return getProxy().getNode();
+        AENetworkProxy proxy = getProxy();
+        if (proxy == null) return null;
+        return proxy.getNode();
     }
 
     @Override
