@@ -63,6 +63,8 @@ import appeng.me.helpers.IGridProxyable;
 import appeng.util.Platform;
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.network.NetworkRegistry;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 import gregtech.api.GregTechAPI;
 import gregtech.api.enums.ItemList;
 import gregtech.api.enums.Textures;
@@ -577,6 +579,7 @@ public class MTELargeMolecularAssembler extends MTEExtendedPowerMultiBlockBase<M
         return new ContainerConfigLargeMolecularAssembler(this);
     }
 
+    @SideOnly(Side.CLIENT)
     @Override
     public Object getClientGuiElement(int ID, EntityPlayer player) {
         return new GuiConfigLargeMolecularAssembler(new ContainerConfigLargeMolecularAssembler(this));

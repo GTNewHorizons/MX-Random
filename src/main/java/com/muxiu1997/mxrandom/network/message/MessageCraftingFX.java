@@ -12,6 +12,8 @@ import appeng.api.storage.data.IAEItemStack;
 import appeng.util.item.AEItemStack;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
 
 public class MessageCraftingFX implements IMessage {
@@ -61,6 +63,7 @@ public class MessageCraftingFX implements IMessage {
 
     public static class Handler implements IMessageClientSideHandler<MessageCraftingFX, IMessage> {
 
+        @SideOnly(Side.CLIENT)
         @Override
         public IMessage handleClientSideMessage(MessageCraftingFX message, MessageContext ctx) {
             CraftingFX fx = new CraftingFX(

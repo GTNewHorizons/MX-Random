@@ -11,6 +11,8 @@ import com.muxiu1997.mxrandom.api.network.IMessageBothSideHandler;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 import gregtech.api.interfaces.metatileentity.IMetaTileEntity;
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
 import io.netty.buffer.ByteBuf;
@@ -71,6 +73,7 @@ public class MessageSyncMetaTileEntityConfig implements IMessage {
 
     public static class Handler implements IMessageBothSideHandler<MessageSyncMetaTileEntityConfig, IMessage> {
 
+        @SideOnly(Side.CLIENT)
         @Override
         public IMessage handleClientSideMessage(MessageSyncMetaTileEntityConfig message, MessageContext ctx) {
             World world = DimensionManager.getWorld(message.dimID);

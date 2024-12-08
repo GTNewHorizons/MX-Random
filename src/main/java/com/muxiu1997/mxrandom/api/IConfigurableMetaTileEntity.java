@@ -6,6 +6,8 @@ import net.minecraftforge.common.util.ForgeDirection;
 import com.muxiu1997.mxrandom.MXRandom;
 import com.muxiu1997.mxrandom.network.message.MessageSyncMetaTileEntityConfig;
 
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
 import io.netty.buffer.ByteBuf;
 
@@ -29,6 +31,7 @@ public interface IConfigurableMetaTileEntity {
 
     Object getServerGuiElement(int ID, EntityPlayer player);
 
+    @SideOnly(Side.CLIENT)
     Object getClientGuiElement(int ID, EntityPlayer player);
 
     void onScrewdriverRightClick(ForgeDirection side, EntityPlayer player, float x, float y, float z);

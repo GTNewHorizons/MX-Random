@@ -11,6 +11,10 @@ import com.muxiu1997.mxrandom.MXRandom;
 import com.muxiu1997.mxrandom.metatileentity.MTELargeMolecularAssembler;
 import com.muxiu1997.mxrandom.network.container.ContainerConfigLargeMolecularAssembler;
 
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
+
+@SideOnly(Side.CLIENT)
 public class GuiConfigLargeMolecularAssembler extends GuiContainer {
 
     private static final ResourceLocation BACKGROUND_TEXTURE = new ResourceLocation(
