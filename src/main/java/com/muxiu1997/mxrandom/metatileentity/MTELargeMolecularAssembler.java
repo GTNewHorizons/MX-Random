@@ -41,6 +41,7 @@ import com.gtnewhorizons.modularui.common.widget.ButtonWidget;
 import com.gtnewhorizons.modularui.common.widget.FakeSyncWidget;
 import com.mojang.authlib.GameProfile;
 import com.muxiu1997.mxrandom.MXRandom;
+import com.muxiu1997.mxrandom.client.MXUITextures;
 import com.muxiu1997.mxrandom.network.message.MessageCraftingFX;
 
 import appeng.api.AEApi;
@@ -643,13 +644,15 @@ public class MTELargeMolecularAssembler extends MTEExtendedPowerMultiBlockBase<M
     public void addUIWidgets(ModularWindow.Builder builder, UIBuildContext buildContext) {
         super.addUIWidgets(builder, buildContext);
         builder.widget(
-                new ButtonWidget().setOnClick((clickData, widget) -> { hiddenCraftingFX = !hiddenCraftingFX; })
+                new ButtonWidget().setOnClick((clickData, widget) -> hiddenCraftingFX = !hiddenCraftingFX)
                         .setPlayClickSound(true).setBackground(() -> {
                             List<UITexture> ret = new ArrayList<>();
-                            if (hiddenCraftingFX) { // todo icon
+                            if (hiddenCraftingFX) {
                                 ret.add(GTUITextures.BUTTON_STANDARD);
+                                ret.add(MXUITextures.OVERLAY_BUTTON_LMA_ANIMATION_OFF);
                             } else {
                                 ret.add(GTUITextures.BUTTON_STANDARD_PRESSED);
+                                ret.add(MXUITextures.OVERLAY_BUTTON_LMA_ANIMATION_ON);
                             }
                             return ret.toArray(new IDrawable[0]);
                         })
