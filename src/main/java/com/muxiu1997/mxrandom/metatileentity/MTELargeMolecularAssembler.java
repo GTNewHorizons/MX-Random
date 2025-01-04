@@ -1,6 +1,7 @@
 package com.muxiu1997.mxrandom.metatileentity;
 
 import static com.gtnewhorizon.structurelib.structure.StructureUtility.*;
+import static gregtech.api.metatileentity.BaseTileEntity.TOOLTIP_DELAY;
 import static gregtech.api.util.GTStructureUtility.ofHatchAdder;
 
 import java.util.ArrayList;
@@ -15,13 +16,13 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.StatCollector;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.util.Constants;
@@ -32,13 +33,16 @@ import org.apache.commons.lang3.tuple.Pair;
 import com.gtnewhorizon.structurelib.structure.IStructureDefinition;
 import com.gtnewhorizon.structurelib.structure.IStructureElementCheckOnly;
 import com.gtnewhorizon.structurelib.structure.StructureDefinition;
+import com.gtnewhorizons.modularui.api.drawable.IDrawable;
+import com.gtnewhorizons.modularui.api.drawable.UITexture;
+import com.gtnewhorizons.modularui.api.screen.ModularWindow;
+import com.gtnewhorizons.modularui.api.screen.UIBuildContext;
+import com.gtnewhorizons.modularui.common.widget.ButtonWidget;
+import com.gtnewhorizons.modularui.common.widget.FakeSyncWidget;
 import com.mojang.authlib.GameProfile;
 import com.muxiu1997.mxrandom.MXRandom;
-import com.muxiu1997.mxrandom.api.IConfigurableMetaTileEntity;
-import com.muxiu1997.mxrandom.client.gui.GuiConfigLargeMolecularAssembler;
-import com.muxiu1997.mxrandom.network.container.ContainerConfigLargeMolecularAssembler;
+import com.muxiu1997.mxrandom.client.MXUITextures;
 import com.muxiu1997.mxrandom.network.message.MessageCraftingFX;
-import com.muxiu1997.mxrandom.network.message.MessageSyncMetaTileEntityConfig;
 
 import appeng.api.AEApi;
 import appeng.api.networking.GridFlags;
@@ -63,11 +67,10 @@ import appeng.me.helpers.IGridProxyable;
 import appeng.util.Platform;
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.network.NetworkRegistry;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
 import gregtech.api.GregTechAPI;
 import gregtech.api.enums.ItemList;
 import gregtech.api.enums.Textures;
+import gregtech.api.gui.modularui.GTUITextures;
 import gregtech.api.interfaces.ITexture;
 import gregtech.api.interfaces.metatileentity.IMetaTileEntity;
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
@@ -78,10 +81,9 @@ import gregtech.api.util.GTUtility;
 import gregtech.api.util.MultiblockTooltipBuilder;
 import gregtech.common.items.behaviors.BehaviourDataOrb;
 import gregtech.common.tileentities.machines.MTEHatchCraftingInputME;
-import io.netty.buffer.ByteBuf;
 
 public class MTELargeMolecularAssembler extends MTEExtendedPowerMultiBlockBase<MTELargeMolecularAssembler>
-        implements IConfigurableMetaTileEntity, ICraftingProvider, IActionHost, IGridProxyable {
+        implements ICraftingProvider, IActionHost, IGridProxyable {
 
     private static final String DATA_ORB_JOBS_KEY = "MX-CraftingJobs";
     private static final String DATA_ORB_JOBS_JOB_KEY = "Job";
@@ -302,7 +304,6 @@ public class MTELargeMolecularAssembler extends MTEExtendedPowerMultiBlockBase<M
                                 + EnumChatFormatting.GRAY
                                 + "s")
                 .addInfo("Subsequent Overclocks:").addInfo("-Double the number of Jobs finished at once")
-                .addInfo("Use the screwdriver to right-click the Controller to open the config GUI")
                 .beginStructureBlock(5, 5, 5, true).addController("Front center")
                 .addCasingInfoMin("Robust Tungstensteel Machine Casing", MIN_CASING_COUNT, false)
                 .addInputBus("Any casing", 1).addEnergyHatch("Any casing", 1).addMaintenanceHatch("Any casing", 1)
@@ -358,16 +359,6 @@ public class MTELargeMolecularAssembler extends MTEExtendedPowerMultiBlockBase<M
             saveAeJobsIfNeeded();
             syncAEProxyActive(aBaseMetaTileEntity);
             issuePatternChangeIfNeeded(aTick);
-        }
-    }
-
-    @Override
-    public void onScrewdriverRightClick(ForgeDirection side, EntityPlayer aPlayer, float aX, float aY, float aZ,
-            ItemStack aTool) {
-        super.onScrewdriverRightClick(side, aPlayer, aX, aY, aZ, aTool);
-        if (getBaseMetaTileEntity().isClientSide() || !(aPlayer instanceof EntityPlayerMP playerMP)) return;
-        if (side == getBaseMetaTileEntity().getFrontFacing()) {
-            MXRandom.network.sendTo(new MessageSyncMetaTileEntityConfig(this, true), playerMP);
         }
     }
 
@@ -575,27 +566,6 @@ public class MTELargeMolecularAssembler extends MTEExtendedPowerMultiBlockBase<M
     }
 
     @Override
-    public void readConfigFromBytes(ByteBuf buf) {
-        hiddenCraftingFX = buf.readBoolean();
-    }
-
-    @Override
-    public void writeConfigToBytes(ByteBuf buf) {
-        buf.writeBoolean(hiddenCraftingFX);
-    }
-
-    @Override
-    public Object getServerGuiElement(int ID, EntityPlayer player) {
-        return new ContainerConfigLargeMolecularAssembler(this);
-    }
-
-    @SideOnly(Side.CLIENT)
-    @Override
-    public Object getClientGuiElement(int ID, EntityPlayer player) {
-        return new GuiConfigLargeMolecularAssembler(new ContainerConfigLargeMolecularAssembler(this));
-    }
-
-    @Override
     public boolean pushPattern(ICraftingPatternDetails patternDetails, InventoryCrafting table) {
         return withAeJobs(($, aeJobs) -> {
             World w = getBaseMetaTileEntity().getWorld();
@@ -668,6 +638,29 @@ public class MTELargeMolecularAssembler extends MTEExtendedPowerMultiBlockBase<M
     @Override
     public IGridNode getActionableNode() {
         return getProxy().getNode();
+    }
+
+    @Override
+    public void addUIWidgets(ModularWindow.Builder builder, UIBuildContext buildContext) {
+        super.addUIWidgets(builder, buildContext);
+        builder.widget(
+                new ButtonWidget().setOnClick((clickData, widget) -> hiddenCraftingFX = !hiddenCraftingFX)
+                        .setPlayClickSound(true).setBackground(() -> {
+                            List<UITexture> ret = new ArrayList<>();
+                            if (hiddenCraftingFX) {
+                                ret.add(GTUITextures.BUTTON_STANDARD);
+                                ret.add(MXUITextures.OVERLAY_BUTTON_LMA_ANIMATION_OFF);
+                            } else {
+                                ret.add(GTUITextures.BUTTON_STANDARD_PRESSED);
+                                ret.add(MXUITextures.OVERLAY_BUTTON_LMA_ANIMATION_ON);
+                            }
+                            return ret.toArray(new IDrawable[0]);
+                        })
+                        .attachSyncer(
+                                new FakeSyncWidget.BooleanSyncer(() -> hiddenCraftingFX, val -> hiddenCraftingFX = val),
+                                builder)
+                        .addTooltip(StatCollector.translateToLocal("mxrandom.client.gui.craftingfx"))
+                        .setTooltipShowUpDelay(TOOLTIP_DELAY).setPos(80, 91).setSize(16, 16));
     }
 
     @SuppressWarnings("all")

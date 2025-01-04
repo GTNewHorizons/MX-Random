@@ -5,12 +5,12 @@ import java.io.IOException;
 import net.minecraft.client.Minecraft;
 
 import com.muxiu1997.mxrandom.MXRandom;
-import com.muxiu1997.mxrandom.api.network.IMessageClientSideHandler;
 import com.muxiu1997.mxrandom.client.fx.CraftingFX;
 
 import appeng.api.storage.data.IAEItemStack;
 import appeng.util.item.AEItemStack;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
+import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
@@ -61,11 +61,18 @@ public class MessageCraftingFX implements IMessage {
         }
     }
 
-    public static class Handler implements IMessageClientSideHandler<MessageCraftingFX, IMessage> {
+    public static class Handler implements IMessageHandler<MessageCraftingFX, IMessage> {
+
+        @Override
+        public IMessage onMessage(MessageCraftingFX message, MessageContext ctx) {
+            if (ctx.side == Side.CLIENT) {
+                spawnFX(message);
+            }
+            return null;
+        }
 
         @SideOnly(Side.CLIENT)
-        @Override
-        public IMessage handleClientSideMessage(MessageCraftingFX message, MessageContext ctx) {
+        private void spawnFX(MessageCraftingFX message) {
             CraftingFX fx = new CraftingFX(
                     Minecraft.getMinecraft().theWorld,
                     message.x,
@@ -74,7 +81,6 @@ public class MessageCraftingFX implements IMessage {
                     message.age,
                     message.itemStack);
             Minecraft.getMinecraft().effectRenderer.addEffect(fx);
-            return null;
         }
     }
 }
